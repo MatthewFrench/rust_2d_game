@@ -1,14 +1,2 @@
-pub const GAME_WIDTH: i32 = 800;
-pub const GAME_HEIGHT: i32 = 600;
-
-#[derive(Copy, Clone)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-    UpLeft,
-    UpRight,
-    DownLeft,
-    DownRight,
-}
+pub const GAME_WIDTH: f32 = 800.0;
+pub const GAME_HEIGHT: f32 = 600.0;

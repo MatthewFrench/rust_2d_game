@@ -1,104 +1,69 @@
-use crate::common::{Direction, GAME_HEIGHT, GAME_WIDTH};
-use ggez::graphics;
-use ggez::nalgebra as na;
+use crate::common::{GAME_HEIGHT, GAME_WIDTH};
+use ggez::graphics::Rect;
+//use ggez::nalgebra as na;
+extern crate nalgebra as na;
+use self::na::{Isometry2, Translation2};
+use ggez::{graphics, Context};
+use mint;
+use na::{Point2, Rotation2, UnitComplex, Vector2};
+use nphysics2d::object::{
+    DefaultBodyHandle, DefaultBodySet, DefaultColliderHandle, DefaultColliderSet,
+};
+use std::borrow::Borrow;
+use std::f32::consts::PI;
 
 pub struct Bullet {
-    pub x: i32,
-    pub y: i32,
-    pub direction: Direction,
     pub shooter_id: u32,
-    pub speed: i32,
-    pub size: i32,
-    pub color: graphics::Color,
-}
-
-impl Default for Bullet {
-    fn default() -> Bullet {
-        Bullet {
-            x: 0,
-            y: 0,
-            direction: Direction::Left,
-            shooter_id: 0,
-            speed: 10,
-            size: 10,
-            color: graphics::Color {
-                r: 1.0,
-                g: 0.0,
-                b: 0.0,
-                a: 1.0,
-            },
-        }
-    }
+    pub diameter: f32,
+    pub body_handle: DefaultBodyHandle,
+    pub collider_handle: DefaultColliderHandle,
 }
 
 impl Bullet {
     pub fn move_bullet(&mut self) {
-        match self.direction {
-            Direction::Up => self.y -= self.speed,
-            Direction::Down => self.y += self.speed,
-            Direction::Left => self.x -= self.speed,
-            Direction::Right => self.x += self.speed,
-            Direction::UpLeft => {
-                self.y -= self.speed;
-                self.x -= self.speed;
-            }
-            Direction::UpRight => {
-                self.y -= self.speed;
-                self.x += self.speed;
-            }
-            Direction::DownLeft => {
-                self.y += self.speed;
-                self.x -= self.speed;
-            }
-            Direction::DownRight => {
-                self.y += self.speed;
-                self.x += self.speed;
-            }
+        /*
+        let push_to = Vector2::new(self.speed, 0.0);
+        self.position += UnitComplex::new(self.direction).transform_vector(&push_to);
+        if self.position.x < self.diameter / 2.0 {
+            self.position.x = self.diameter / 2.0;
+            self.direction += PI / 2.0;
         }
-        if self.x < self.size / 2 {
-            self.x = self.size / 2;
-            self.direction = match self.direction {
-                Direction::Left => Direction::Right,
-                Direction::UpLeft => Direction::UpRight,
-                Direction::DownLeft => Direction::DownRight,
-                _ => self.direction,
-            }
+        if self.position.x > GAME_WIDTH - self.diameter / 2.0 {
+            self.position.x = GAME_WIDTH - self.diameter / 2.0;
+            self.direction += PI / 2.0;
         }
-        if self.x > GAME_WIDTH + self.size / 2 {
-            self.x = GAME_WIDTH + self.size / 2;
-            self.direction = match self.direction {
-                Direction::Right => Direction::Left,
-                Direction::UpRight => Direction::UpLeft,
-                Direction::DownRight => Direction::DownLeft,
-                _ => self.direction,
-            }
+        if self.position.y < self.diameter / 2.0 {
+            self.position.y = self.diameter / 2.0;
+            self.direction += PI / 2.0;
         }
-        if self.y < self.size / 2 {
-            self.y = self.size / 2;
-            self.direction = match self.direction {
-                Direction::Up => Direction::Down,
-                Direction::UpLeft => Direction::DownLeft,
-                Direction::UpRight => Direction::DownRight,
-                _ => self.direction,
-            }
+        if self.position.y > GAME_HEIGHT - self.diameter / 2.0 {
+            self.position.y = GAME_HEIGHT - self.diameter / 2.0;
+            self.direction += PI / 2.0;
         }
-        if self.y > GAME_HEIGHT + self.size / 2 {
-            self.y = GAME_HEIGHT + self.size / 2;
-            self.direction = match self.direction {
-                Direction::Down => Direction::Up,
-                Direction::DownRight => Direction::UpRight,
-                Direction::DownLeft => Direction::UpLeft,
-                _ => self.direction,
-            }
-        }
+        self.rotation += PI / 180.0;
+        */
     }
-    pub fn draw_bullet(&mut self, mesh: &mut graphics::MeshBuilder) {
-        mesh.circle(
-            graphics::DrawMode::fill(),
-            na::Point2::new(self.x as f32, self.y as f32),
-            self.size as f32 / 2.0,
-            0.1,
-            self.color,
-        );
+    pub fn draw_bullet(
+        &mut self,
+        ctx: &mut Context,
+        bullet_batch: &mut ggez::graphics::spritebatch::SpriteBatch,
+        bullet_image_width: f32,
+        bullet_image_height: f32,
+        colliders: &mut DefaultColliderSet<f32>,
+    ) -> ggez::GameResult {
+        let collider_optional = colliders.get(self.collider_handle);
+        if let Some(collider) = collider_optional {
+            let position: &Isometry2<f32> = collider.position();
+            let d = graphics::DrawParam::new()
+                .dest([position.translation.x, position.translation.y])
+                .offset([0.5, 0.5])
+                .rotation(position.rotation.re)
+                .scale([
+                    self.diameter / bullet_image_width,
+                    self.diameter / bullet_image_height,
+                ]);
+            bullet_batch.add(d);
+        }
+        Ok(())
     }
 }

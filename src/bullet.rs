@@ -1,6 +1,5 @@
 use crate::common::{GAME_HEIGHT, GAME_WIDTH};
 use ggez::graphics::Rect;
-//use ggez::nalgebra as na;
 extern crate nalgebra as na;
 use self::na::{Isometry2, Translation2};
 use ggez::{graphics, Context};
@@ -20,29 +19,6 @@ pub struct Bullet {
 }
 
 impl Bullet {
-    pub fn move_bullet(&mut self) {
-        /*
-        let push_to = Vector2::new(self.speed, 0.0);
-        self.position += UnitComplex::new(self.direction).transform_vector(&push_to);
-        if self.position.x < self.diameter / 2.0 {
-            self.position.x = self.diameter / 2.0;
-            self.direction += PI / 2.0;
-        }
-        if self.position.x > GAME_WIDTH - self.diameter / 2.0 {
-            self.position.x = GAME_WIDTH - self.diameter / 2.0;
-            self.direction += PI / 2.0;
-        }
-        if self.position.y < self.diameter / 2.0 {
-            self.position.y = self.diameter / 2.0;
-            self.direction += PI / 2.0;
-        }
-        if self.position.y > GAME_HEIGHT - self.diameter / 2.0 {
-            self.position.y = GAME_HEIGHT - self.diameter / 2.0;
-            self.direction += PI / 2.0;
-        }
-        self.rotation += PI / 180.0;
-        */
-    }
     pub fn draw_bullet(
         &mut self,
         ctx: &mut Context,

@@ -1,7 +1,5 @@
 use crate::bullet::Bullet;
 use crate::common::{GAME_HEIGHT, GAME_WIDTH};
-use ggez::input::mouse::position;
-//use ggez::nalgebra as na;
 extern crate nalgebra as na;
 use self::na::Isometry2;
 use ggez::{graphics, Context};
@@ -29,6 +27,7 @@ pub struct Player {
     pub color: graphics::Color,
     pub image: graphics::Image,
     pub health: f32,
+    pub shoot_timer: f64,
 }
 
 impl Player {
@@ -38,18 +37,20 @@ impl Player {
         bodies: &mut DefaultBodySet<f64>,
         colliders: &mut DefaultColliderSet<f64>,
     ) {
-        if self.pressing_shoot {
-            let diameter = 10.0;
+        self.shoot_timer += 1.0;
+        if self.pressing_shoot && self.shoot_timer >= 60.0 {
+            self.shoot_timer = 0.0;
+            let diameter = 50.0;
             let speed = 10.0 * 60.0;
             // Create rigid body for bullet
-            let mut rb_desc = RigidBodyDesc::new()
+            let rb_desc = RigidBodyDesc::new()
                 .position(Isometry2::new(
                     Vector2::new(self.position.x, self.position.y),
                     0.0,
                 ))
                 .velocity(Velocity2::new(
                     UnitComplex::new(self.direction).transform_vector(&Vector2::new(speed, 0.0)),
-                    0.0,
+                    PI * 5.0,
                 ))
                 .mass(1.0);
             let rigid_body = rb_desc.build();
@@ -59,6 +60,7 @@ impl Player {
             let shape = ShapeHandle::new(Ball::new(diameter * 0.9 / 2.0));
             // Create collider with shape and attach it to rigid body
             let collider = ColliderDesc::new(shape)
+                .ccd_enabled(true)
                 .density(1.0)
                 .material(MaterialHandle::new(BasicMaterial::new(1.0, 0.0)))
                 .build(BodyPartHandle(rigid_body_handle, 0));
@@ -89,93 +91,17 @@ impl Player {
             self.position -=
                 UnitComplex::new(self.direction).transform_vector(&Vector2::new(self.speed, 0.0));
         }
-        /*
-        self.direction = match (
-            self.pressing_down,
-            self.pressing_up,
-            self.pressing_left,
-            self.pressing_right,
-        ) {
-            (false, true, false, false) => Direction::Up,
-            (true, false, false, false) => Direction::Down,
-            (false, false, true, false) => Direction::Left,
-            (false, false, false, true) => Direction::Right,
-            (false, true, true, false) => Direction::UpLeft,
-            (false, true, false, true) => Direction::UpRight,
-            (true, false, true, false) => Direction::DownLeft,
-            (true, false, false, true) => Direction::DownRight,
-            _ => self.direction,
-        };
-        self.moving =
-            self.pressing_down || self.pressing_left || self.pressing_right || self.pressing_up;
-        if self.moving {
-            match self.direction {
-                Direction::Up => self.y -= self.speed,
-                Direction::Down => self.y += self.speed,
-                Direction::Left => self.x -= self.speed,
-                Direction::Right => self.x += self.speed,
-                Direction::UpLeft => {
-                    self.y -= self.speed;
-                    self.x -= self.speed;
-                }
-                Direction::UpRight => {
-                    self.y -= self.speed;
-                    self.x += self.speed;
-                }
-                Direction::DownLeft => {
-                    self.y += self.speed;
-                    self.x -= self.speed;
-                }
-                Direction::DownRight => {
-                    self.y += self.speed;
-                    self.x += self.speed;
-                }
-            }
-        }
-        */
         if self.position.x < self.size / 2.0 {
             self.position.x = self.size / 2.0;
-            /*
-            self.direction = match self.direction {
-                Direction::Left => Direction::Right,
-                Direction::UpLeft => Direction::UpRight,
-                Direction::DownLeft => Direction::DownRight,
-                _ => self.direction,
-            }
-            */
         }
         if self.position.x > GAME_WIDTH - self.size / 2.0 {
             self.position.x = GAME_WIDTH - self.size / 2.0;
-            /*
-            self.direction = match self.direction {
-                Direction::Right => Direction::Left,
-                Direction::UpRight => Direction::UpLeft,
-                Direction::DownRight => Direction::DownLeft,
-                _ => self.direction,
-            }
-            */
         }
         if self.position.y < self.size / 2.0 {
             self.position.y = self.size / 2.0;
-            /*
-            self.direction = match self.direction {
-                Direction::Up => Direction::Down,
-                Direction::UpLeft => Direction::DownLeft,
-                Direction::UpRight => Direction::DownRight,
-                _ => self.direction,
-            }
-            */
         }
         if self.position.y > GAME_HEIGHT - self.size / 2.0 {
             self.position.y = GAME_HEIGHT - self.size / 2.0;
-            /*
-            self.direction = match self.direction {
-                Direction::Down => Direction::Up,
-                Direction::DownRight => Direction::UpRight,
-                Direction::DownLeft => Direction::UpLeft,
-                _ => self.direction,
-            }
-            */
         }
     }
     pub fn draw_player(&mut self, ctx: &mut Context) -> ggez::GameResult {
@@ -185,7 +111,7 @@ impl Player {
             graphics::DrawParam::new()
                 .dest([self.position.x as f32, self.position.y as f32])
                 .offset([0.5, 0.5])
-                .rotation(self.direction as f32)
+                .rotation((self.direction - PI / 2.0) as f32)
                 .scale([1.0, 1.0]),
         )?;
         Ok(())

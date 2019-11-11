@@ -1,24 +1,22 @@
+extern crate nalgebra as na;
+extern crate ncollide2d;
 use crate::bullet::Bullet;
+use crate::common::{GAME_HEIGHT, GAME_WIDTH};
 use crate::player::Player;
 use ggez::event::KeyCode;
 use ggez::input::keyboard::KeyMods;
 use ggez::{event, graphics, Context};
-use std::f64::consts::PI;
-
-extern crate ncollide2d;
-
-//use ggez::nalgebra as na;
-extern crate nalgebra as na;
 use na::{Point2, Vector2};
-
-use crate::common::{GAME_HEIGHT, GAME_WIDTH};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
+use nphysics2d::material::{BasicMaterial, MaterialHandle};
 use nphysics2d::object::{
-    BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, RigidBodyDesc,
+    BodyPartHandle, BodyStatus, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground,
+    RigidBodyDesc,
 };
 use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld, MechanicalWorld};
+use std::f64::consts::PI;
 
 pub struct GameState {
     bullets: Vec<Bullet>,
@@ -56,17 +54,17 @@ impl GameState {
             speed: 3.0,
             size: 20.0,
             health: 100.0,
-            image: graphics::Image::solid(
-                ctx,
-                20,
-                graphics::Color {
-                    r: 1.0,
-                    g: 0.0,
-                    b: 0.0,
-                    a: 1.0,
-                },
-            )?,
-            //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
+            image: graphics::Image::new(ctx, "/Player 1.png")?, /*graphics::Image::solid(
+                                                                    ctx,
+                                                                    20,
+                                                                    graphics::Color {
+                                                                        r: 1.0,
+                                                                        g: 0.0,
+                                                                        b: 0.0,
+                                                                        a: 1.0,
+                                                                    },
+                                                                )?*/
+            shoot_timer: 60.0, //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
         };
         let mut player2 = Player {
             position: Point2::new(600.0, 240.0),
@@ -87,7 +85,8 @@ impl GameState {
             speed: 3.0,
             size: 20.0,
             health: 100.0,
-            image: graphics::Image::solid(
+            image: graphics::Image::new(ctx, "/Player 2.png")?,
+            /*graphics::Image::solid(
                 ctx,
                 20,
                 graphics::Color {
@@ -96,8 +95,8 @@ impl GameState {
                     b: 0.0,
                     a: 1.0,
                 },
-            )?,
-            //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
+            )?*/
+            shoot_timer: 60.0, //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
         };
         let bullets: Vec<Bullet> = Vec::new();
         let bullet_image = graphics::Image::new(ctx, "/Fireball.png")?;
@@ -115,43 +114,52 @@ impl GameState {
             constraints: DefaultJointConstraintSet::new(),
             forces: DefaultForceGeneratorSet::new(),
         };
+        // Advanced CCD physics accuracy
+        s.mechanical_world.integration_parameters.max_ccd_substeps = 2;
         GameState::create_ground(&mut s);
         Ok(s)
     }
 
     pub fn create_ground(game_state: &mut GameState) {
+        let create_wall = |game_state: &mut GameState, width: f64, height: f64, x: f64, y: f64| {
+            game_state.colliders.insert(
+                ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(width, height))))
+                    .density(1.0)
+                    .material(MaterialHandle::new(BasicMaterial::new(1.0, 0.0)))
+                    .build(BodyPartHandle(
+                        game_state.bodies.insert(
+                            RigidBodyDesc::new()
+                                .status(BodyStatus::Static)
+                                .translation(Vector2::new(x, y))
+                                .build(),
+                        ),
+                        0,
+                    )),
+            );
+        };
+
         // Top
-        game_state.colliders.insert(
-            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(GAME_WIDTH, 1.0))))
-                .translation(Vector2::new(GAME_WIDTH / 2.0, 0.0))
-                .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
-        );
+        create_wall(game_state, GAME_WIDTH, 1.0, GAME_WIDTH / 2.0, -0.5);
 
         // Bottom
-        game_state.colliders.insert(
-            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(GAME_WIDTH, 1.0))))
-                .translation(Vector2::new(GAME_WIDTH / 2.0, GAME_HEIGHT))
-                .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
+        create_wall(
+            game_state,
+            GAME_WIDTH,
+            1.0,
+            GAME_WIDTH / 2.0,
+            GAME_HEIGHT + 0.5,
         );
 
         // Left
-        game_state.colliders.insert(
-            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(
-                1.0,
-                GAME_HEIGHT,
-            ))))
-            .translation(Vector2::new(0.0, GAME_HEIGHT / 2.0))
-            .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
-        );
+        create_wall(game_state, 1.0, GAME_HEIGHT, -0.5, GAME_HEIGHT / 2.0);
 
         // Right
-        game_state.colliders.insert(
-            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(
-                1.0,
-                GAME_HEIGHT,
-            ))))
-            .translation(Vector2::new(GAME_WIDTH, GAME_HEIGHT / 2.0))
-            .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
+        create_wall(
+            game_state,
+            1.0,
+            GAME_HEIGHT,
+            GAME_WIDTH + 0.5,
+            GAME_HEIGHT / 2.0,
         );
     }
 }

@@ -7,6 +7,7 @@ mod game_state;
 mod player;
 use crate::common::{GAME_HEIGHT, GAME_WIDTH};
 use game_state::GameState;
+use ggez::conf::WindowSetup;
 use std::env;
 use std::path;
 
@@ -19,7 +20,11 @@ pub fn main() -> ggez::GameResult {
     } else {
         path::PathBuf::from("./resources")
     };
-    let cb = ggez::ContextBuilder::new("Bullet Game!", "Matthew French");
+    let mut cb =
+        ggez::ContextBuilder::new("Bullet Game!", "Matthew French").window_setup(WindowSetup {
+            title: String::from("Fireball Game"),
+            ..WindowSetup::default()
+        });
     let (ctx, event_loop) = &mut cb
         .add_resource_path(resource_dir)
         .window_mode(

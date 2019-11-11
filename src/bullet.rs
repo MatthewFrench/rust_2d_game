@@ -1,21 +1,19 @@
 use crate::common::{GAME_HEIGHT, GAME_WIDTH};
-use ggez::graphics::Rect;
+use ggez::graphics::{Color, Rect};
 extern crate nalgebra as na;
 use self::na::{Isometry2, Translation2};
 use ggez::{graphics, Context};
-use mint;
 use na::{Point2, Rotation2, UnitComplex, Vector2};
 use nphysics2d::object::{
     DefaultBodyHandle, DefaultBodySet, DefaultColliderHandle, DefaultColliderSet,
 };
-use std::borrow::Borrow;
-use std::f32::consts::PI;
 
 pub struct Bullet {
     pub shooter_id: u32,
     pub diameter: f64,
     pub body_handle: DefaultBodyHandle,
     pub collider_handle: DefaultColliderHandle,
+    pub color: Color,
 }
 
 impl Bullet {
@@ -33,11 +31,12 @@ impl Bullet {
             let d = graphics::DrawParam::new()
                 .dest([position.translation.x as f32, position.translation.y as f32])
                 .offset([0.5, 0.5])
-                .rotation(position.rotation.re as f32)
+                .rotation(position.rotation.angle() as f32)
                 .scale([
                     self.diameter as f32 / bullet_image_width,
                     self.diameter as f32 / bullet_image_height,
-                ]);
+                ])
+                .color(self.color);
             bullet_batch.add(d);
         }
         Ok(())

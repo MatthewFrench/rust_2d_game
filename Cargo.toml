@@ -11,7 +11,6 @@ ggez = { git = "https://github.com/ggez/ggez" }
 ncollide2d = "0.21.0"
 nphysics2d = "0.13.0"
 nalgebra = "0.19.0"
-mint = "0.5.3"
 
 [profile.dev]
 opt-level = 1

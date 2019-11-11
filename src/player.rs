@@ -1,7 +1,11 @@
 use crate::bullet::Bullet;
-use crate::common::{GAME_HEIGHT, GAME_WIDTH};
+use crate::common::{
+    FIREBALL_SIZE, FIREBALL_SPEED, FIREBALL__ROTATION_SPEED, GAME_FPS, GAME_HEIGHT, GAME_WIDTH,
+    PLAYER_SHOOT_DELAY,
+};
 extern crate nalgebra as na;
 use self::na::Isometry2;
+use ggez::graphics::Color;
 use ggez::{graphics, Context};
 use na::{Point2, Rotation2, UnitComplex, Vector2};
 use ncollide2d::shape::{Ball, ShapeHandle};
@@ -28,6 +32,7 @@ pub struct Player {
     pub image: graphics::Image,
     pub health: f32,
     pub shoot_timer: f64,
+    pub bullet_color: Color,
 }
 
 impl Player {
@@ -38,10 +43,10 @@ impl Player {
         colliders: &mut DefaultColliderSet<f64>,
     ) {
         self.shoot_timer += 1.0;
-        if self.pressing_shoot && self.shoot_timer >= 60.0 {
+        if self.pressing_shoot && self.shoot_timer >= PLAYER_SHOOT_DELAY {
             self.shoot_timer = 0.0;
-            let diameter = 50.0;
-            let speed = 10.0 * 60.0;
+            let diameter = FIREBALL_SIZE;
+            let speed = FIREBALL_SPEED * GAME_FPS;
             // Create rigid body for bullet
             let rb_desc = RigidBodyDesc::new()
                 .position(Isometry2::new(
@@ -50,14 +55,14 @@ impl Player {
                 ))
                 .velocity(Velocity2::new(
                     UnitComplex::new(self.direction).transform_vector(&Vector2::new(speed, 0.0)),
-                    PI * 5.0,
+                    FIREBALL__ROTATION_SPEED * GAME_FPS,
                 ))
                 .mass(1.0);
             let rigid_body = rb_desc.build();
             // Add it to simulation bodies set
             let rigid_body_handle = bodies.insert(rigid_body);
             // Create shape for bullet
-            let shape = ShapeHandle::new(Ball::new(diameter * 0.9 / 2.0));
+            let shape = ShapeHandle::new(Ball::new(diameter * 0.7 / 2.0));
             // Create collider with shape and attach it to rigid body
             let collider = ColliderDesc::new(shape)
                 .ccd_enabled(true)
@@ -72,6 +77,7 @@ impl Player {
                 diameter,
                 body_handle: rigid_body_handle,
                 collider_handle,
+                color: self.bullet_color,
             };
             bullets.push(bullet);
         }
@@ -112,7 +118,10 @@ impl Player {
                 .dest([self.position.x as f32, self.position.y as f32])
                 .offset([0.5, 0.5])
                 .rotation((self.direction - PI / 2.0) as f32)
-                .scale([1.0, 1.0]),
+                .scale([
+                    self.size as f32 / self.image.width() as f32,
+                    self.size as f32 / self.image.height() as f32,
+                ]),
         )?;
         Ok(())
     }

@@ -524,7 +524,6 @@ name = "game_2d"
 version = "0.1.0"
 dependencies = [
  "ggez 0.5.1 (git+https://github.com/ggez/ggez)",
- "mint 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ncollide2d 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nphysics2d 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",

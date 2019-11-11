@@ -1,9 +1,10 @@
 extern crate nalgebra as na;
 extern crate ncollide2d;
 use crate::bullet::Bullet;
-use crate::common::{GAME_HEIGHT, GAME_WIDTH};
+use crate::common::{GAME_HEIGHT, GAME_WIDTH, PLAYER_SHOOT_DELAY, PLAYER_SIZE, PLAYER_SPEED};
 use crate::player::Player;
 use ggez::event::KeyCode;
+use ggez::graphics::Color;
 use ggez::input::keyboard::KeyMods;
 use ggez::{event, graphics, Context};
 use na::{Point2, Vector2};
@@ -25,6 +26,7 @@ pub struct GameState {
     bullet_image_width: f32,
     bullet_image_height: f32,
     bullet_batch: graphics::spritebatch::SpriteBatch,
+    arena_image: graphics::Image,
     mechanical_world: DefaultMechanicalWorld<f64>,
     geometrical_world: DefaultGeometricalWorld<f64>,
     bodies: DefaultBodySet<f64>,
@@ -51,8 +53,8 @@ impl GameState {
             pressing_left: false,
             pressing_right: false,
             pressing_shoot: false,
-            speed: 3.0,
-            size: 20.0,
+            speed: PLAYER_SPEED,
+            size: PLAYER_SIZE,
             health: 100.0,
             image: graphics::Image::new(ctx, "/Player 1.png")?, /*graphics::Image::solid(
                                                                     ctx,
@@ -64,7 +66,13 @@ impl GameState {
                                                                         a: 1.0,
                                                                     },
                                                                 )?*/
-            shoot_timer: 60.0, //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
+            shoot_timer: PLAYER_SHOOT_DELAY, //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
+            bullet_color: Color {
+                r: 0.6,
+                g: 1.0,
+                b: 0.6,
+                a: 1.0,
+            },
         };
         let mut player2 = Player {
             position: Point2::new(600.0, 240.0),
@@ -82,8 +90,8 @@ impl GameState {
             pressing_left: false,
             pressing_right: false,
             pressing_shoot: false,
-            speed: 3.0,
-            size: 20.0,
+            speed: PLAYER_SPEED,
+            size: PLAYER_SIZE,
             health: 100.0,
             image: graphics::Image::new(ctx, "/Player 2.png")?,
             /*graphics::Image::solid(
@@ -96,7 +104,13 @@ impl GameState {
                     a: 1.0,
                 },
             )?*/
-            shoot_timer: 60.0, //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
+            shoot_timer: PLAYER_SHOOT_DELAY, //let image1 = graphics::Image::new(ctx, "/dragon1.png")?;
+            bullet_color: Color {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+                a: 1.0,
+            },
         };
         let bullets: Vec<Bullet> = Vec::new();
         let bullet_image = graphics::Image::new(ctx, "/Fireball.png")?;
@@ -107,6 +121,7 @@ impl GameState {
             bullet_image_width: bullet_image.width() as f32,
             bullet_image_height: bullet_image.height() as f32,
             bullet_batch: graphics::spritebatch::SpriteBatch::new(bullet_image),
+            arena_image: graphics::Image::new(ctx, "/Arena.png")?,
             mechanical_world: DefaultMechanicalWorld::new(Vector2::new(0.0, 0.0)),
             geometrical_world: DefaultGeometricalWorld::<f64>::new(),
             bodies: DefaultBodySet::new(),
@@ -232,6 +247,14 @@ impl event::EventHandler for GameState {
 
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         graphics::clear(ctx, [0.1, 0.2, 0.3, 1.0].into());
+        graphics::draw(
+            ctx,
+            &self.arena_image,
+            graphics::DrawParam::new().dest([0.0, 0.0]).scale([
+                GAME_WIDTH as f32 / self.arena_image.width() as f32,
+                GAME_HEIGHT as f32 / self.arena_image.height() as f32,
+            ]),
+        )?;
         self.player1.draw_player(ctx)?;
         self.player2.draw_player(ctx)?;
         for bullet in &mut self.bullets {

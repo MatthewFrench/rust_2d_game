@@ -11,6 +11,7 @@ extern crate ncollide2d;
 extern crate nalgebra as na;
 use na::{Point2, Vector2};
 
+use crate::common::{GAME_HEIGHT, GAME_WIDTH};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -100,7 +101,7 @@ impl GameState {
         };
         let bullets: Vec<Bullet> = Vec::new();
         let bullet_image = graphics::Image::new(ctx, "/Fireball.png")?;
-        let s = GameState {
+        let mut s = GameState {
             bullets,
             player1,
             player2,
@@ -114,7 +115,44 @@ impl GameState {
             constraints: DefaultJointConstraintSet::new(),
             forces: DefaultForceGeneratorSet::new(),
         };
+        GameState::create_ground(&mut s);
         Ok(s)
+    }
+
+    pub fn create_ground(game_state: &mut GameState) {
+        // Top
+        game_state.colliders.insert(
+            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(GAME_WIDTH, 1.0))))
+                .translation(Vector2::new(GAME_WIDTH / 2.0, 0.0))
+                .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
+        );
+
+        // Bottom
+        game_state.colliders.insert(
+            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(GAME_WIDTH, 1.0))))
+                .translation(Vector2::new(GAME_WIDTH / 2.0, GAME_HEIGHT))
+                .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
+        );
+
+        // Left
+        game_state.colliders.insert(
+            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(
+                1.0,
+                GAME_HEIGHT,
+            ))))
+            .translation(Vector2::new(0.0, GAME_HEIGHT / 2.0))
+            .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
+        );
+
+        // Right
+        game_state.colliders.insert(
+            ColliderDesc::new(ShapeHandle::new(Cuboid::new(Vector2::new(
+                1.0,
+                GAME_HEIGHT,
+            ))))
+            .translation(Vector2::new(GAME_WIDTH, GAME_HEIGHT / 2.0))
+            .build(BodyPartHandle(game_state.bodies.insert(Ground::new()), 0)),
+        );
     }
 }
 
@@ -173,25 +211,6 @@ impl event::EventHandler for GameState {
             .shoot(&mut self.bullets, &mut self.bodies, &mut self.colliders);
         self.player2
             .shoot(&mut self.bullets, &mut self.bodies, &mut self.colliders);
-        //for bullet in &mut self.bullets {
-        //    bullet.move_bullet();
-        //}
-        /*
-        for bullet1_index in 0..self.bullets.len() {
-            let (bullets_split1, bullets_split2) = self.bullets.split_at_mut(bullet1_index + 1);
-            if let Some(bullet1) = bullets_split1.last_mut() {
-                for bullet2 in bullets_split2 {
-                    let dist_x = bullet1.position.x - bullet2.position.x;
-                    let dist_y = bullet1.position.y - bullet2.position.y;
-                    let distance = ((dist_x * dist_x) + (dist_y * dist_y)).sqrt();
-                    if distance <= bullet1.size / 2.0 + bullet2.size / 2.0 {
-                        bullet1.direction += PI;
-                        bullet2.direction += PI;
-                    }
-                }
-            }
-        }
-        */
         // Run the simulation.
         self.mechanical_world.step(
             &mut self.geometrical_world,

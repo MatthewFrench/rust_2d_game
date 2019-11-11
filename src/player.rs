@@ -40,21 +40,23 @@ impl Player {
     ) {
         if self.pressing_shoot {
             let diameter = 10.0;
-            let speed = 10.0;
-
+            let speed = 10.0 * 60.0;
             // Create rigid body for bullet
             let mut rb_desc = RigidBodyDesc::new()
                 .position(Isometry2::new(
                     Vector2::new(self.position.x, self.position.y),
                     0.0,
                 ))
-                //.velocity(Velocity2::new(Vector2::new(speed, 0.0), self.direction))
+                .velocity(Velocity2::new(
+                    UnitComplex::new(self.direction).transform_vector(&Vector2::new(speed, 0.0)),
+                    0.0,
+                ))
                 .mass(1.0);
             let rigid_body = rb_desc.build();
             // Add it to simulation bodies set
             let rigid_body_handle = bodies.insert(rigid_body);
             // Create shape for bullet
-            let shape = ShapeHandle::new(Ball::new(diameter / 2.0));
+            let shape = ShapeHandle::new(Ball::new(diameter * 0.9 / 2.0));
             // Create collider with shape and attach it to rigid body
             let collider = ColliderDesc::new(shape)
                 .density(1.0)
@@ -80,12 +82,12 @@ impl Player {
             self.direction += PI / 36.0;
         }
         if self.pressing_up {
-            let push_to = Vector2::new(self.speed, 0.0);
-            self.position += UnitComplex::new(self.direction).transform_vector(&push_to);
+            self.position +=
+                UnitComplex::new(self.direction).transform_vector(&Vector2::new(self.speed, 0.0));
         }
         if self.pressing_down {
-            let push_to = Vector2::new(self.speed, 0.0);
-            self.position -= UnitComplex::new(self.direction).transform_vector(&push_to);
+            self.position -=
+                UnitComplex::new(self.direction).transform_vector(&Vector2::new(self.speed, 0.0));
         }
         /*
         self.direction = match (

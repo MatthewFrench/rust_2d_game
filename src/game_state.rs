@@ -3,7 +3,7 @@ use crate::player::Player;
 use ggez::event::KeyCode;
 use ggez::input::keyboard::KeyMods;
 use ggez::{event, graphics, Context};
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
 extern crate ncollide2d;
 
@@ -26,12 +26,12 @@ pub struct GameState {
     bullet_image_width: f32,
     bullet_image_height: f32,
     bullet_batch: graphics::spritebatch::SpriteBatch,
-    mechanical_world: DefaultMechanicalWorld<f32>,
-    geometrical_world: DefaultGeometricalWorld<f32>,
-    bodies: DefaultBodySet<f32>,
-    colliders: DefaultColliderSet<f32>,
-    forces: DefaultForceGeneratorSet<f32>,
-    constraints: DefaultJointConstraintSet<f32>,
+    mechanical_world: DefaultMechanicalWorld<f64>,
+    geometrical_world: DefaultGeometricalWorld<f64>,
+    bodies: DefaultBodySet<f64>,
+    colliders: DefaultColliderSet<f64>,
+    forces: DefaultForceGeneratorSet<f64>,
+    constraints: DefaultJointConstraintSet<f64>,
 }
 
 impl GameState {
@@ -107,8 +107,8 @@ impl GameState {
             bullet_image_width: bullet_image.width() as f32,
             bullet_image_height: bullet_image.height() as f32,
             bullet_batch: graphics::spritebatch::SpriteBatch::new(bullet_image),
-            mechanical_world: DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81)),
-            geometrical_world: DefaultGeometricalWorld::<f32>::new(),
+            mechanical_world: DefaultMechanicalWorld::new(Vector2::new(0.0, 0.0)),
+            geometrical_world: DefaultGeometricalWorld::<f64>::new(),
             bodies: DefaultBodySet::new(),
             colliders: DefaultColliderSet::new(),
             constraints: DefaultJointConstraintSet::new(),

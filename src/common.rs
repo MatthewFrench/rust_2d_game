@@ -1,2 +1,2 @@
-pub const GAME_WIDTH: f32 = 800.0;
-pub const GAME_HEIGHT: f32 = 600.0;
+pub const GAME_WIDTH: f64 = 800.0;
+pub const GAME_HEIGHT: f64 = 600.0;

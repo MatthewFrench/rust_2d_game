@@ -12,10 +12,10 @@ use nphysics2d::material::{BasicMaterial, MaterialHandle};
 use nphysics2d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodySet, DefaultColliderSet, RigidBodyDesc,
 };
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
 pub struct Player {
-    pub position: Point2<f32>,
+    pub position: Point2<f64>,
     pub shooter_id: u32,
     pub moving: bool,
     pub pressing_up: bool,
@@ -23,9 +23,9 @@ pub struct Player {
     pub pressing_left: bool,
     pub pressing_right: bool,
     pub pressing_shoot: bool,
-    pub direction: f32,
-    pub speed: f32,
-    pub size: f32,
+    pub direction: f64,
+    pub speed: f64,
+    pub size: f64,
     pub color: graphics::Color,
     pub image: graphics::Image,
     pub health: f32,
@@ -35,8 +35,8 @@ impl Player {
     pub fn shoot(
         &mut self,
         bullets: &mut Vec<Bullet>,
-        bodies: &mut DefaultBodySet<f32>,
-        colliders: &mut DefaultColliderSet<f32>,
+        bodies: &mut DefaultBodySet<f64>,
+        colliders: &mut DefaultColliderSet<f64>,
     ) {
         if self.pressing_shoot {
             let diameter = 10.0;
@@ -48,13 +48,13 @@ impl Player {
                     Vector2::new(self.position.x, self.position.y),
                     0.0,
                 ))
-                .velocity(Velocity2::new(Vector2::new(speed, 0.0), self.direction))
-                .mass(diameter / 2.0);
+                //.velocity(Velocity2::new(Vector2::new(speed, 0.0), self.direction))
+                .mass(1.0);
             let rigid_body = rb_desc.build();
             // Add it to simulation bodies set
             let rigid_body_handle = bodies.insert(rigid_body);
             // Create shape for bullet
-            let shape = ShapeHandle::new(Ball::new(1.0));
+            let shape = ShapeHandle::new(Ball::new(diameter / 2.0));
             // Create collider with shape and attach it to rigid body
             let collider = ColliderDesc::new(shape)
                 .density(1.0)
@@ -181,9 +181,9 @@ impl Player {
             ctx,
             &self.image,
             graphics::DrawParam::new()
-                .dest([self.position.x, self.position.y])
+                .dest([self.position.x as f32, self.position.y as f32])
                 .offset([0.5, 0.5])
-                .rotation(self.direction)
+                .rotation(self.direction as f32)
                 .scale([1.0, 1.0]),
         )?;
         Ok(())
